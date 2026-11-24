@@ -490,6 +490,109 @@ h3 {
   cursor: pointer;
 }
 
+/* ===== 浸水想定と避難場所の地図 ===== */
+.layer-switch {
+  border: none;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.layer-switch legend {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.layer-switch label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.layer-switch input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--ink);
+}
+
+.hazard-drag {
+  min-height: 44px;
+  margin-bottom: 8px;
+  padding: 6px 14px;
+  font-family: var(--gothic);
+  font-size: 0.95rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background-color: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.hazard-drag[aria-pressed="true"] {
+  background-color: var(--ink);
+  color: #fff;
+}
+
+.hazard-map {
+  width: 100%;
+  height: 440px;
+  border: 2px solid var(--ink);
+  background-color: var(--sea-pale);
+}
+
+/* 押した地点の結果 */
+.hazard-info {
+  border-left: 4px solid var(--sea);
+  background-color: #fff;
+  padding: 8px 14px;
+  margin: 10px 0;
+  font-size: 0.95rem;
+}
+
+.hazard-info p {
+  margin: 4px 0;
+}
+
+.hazard-info ol {
+  margin: 4px 0;
+  padding-left: 1.4em;
+}
+
+/* 津波避難場所の印：白い縁取りの墨色の四角（浸水の色と形でも区別する） */
+.shelter-icon {
+  background-color: var(--ink);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+.shelter-sample {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin: 0 2px;
+  vertical-align: -1px;
+  background-color: var(--ink);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+.depth-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.depth-legend li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 /* ===== 一覧の表 ===== */
 .data-table summary {
   cursor: pointer;

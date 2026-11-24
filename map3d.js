@@ -269,6 +269,18 @@ function showArrivalOrder() {
   text.hidden = false;
 }
 
+// --- 市町村の名前から、その海岸の真ん中の緯度・経度を出す（2Dの地図で使う） ---
+// map.json は km 単位の平面なので、作ったときの式（tools/make_map.py）を逆にたどる
+function areaLatLng(name) {
+  const area = map.areas.find((a) => a.name === name);
+  if (!area) return null;
+  const LON0 = 133.35, LAT0 = 33.45;
+  return {
+    lat: -area.center.z / 110.57 + LAT0,
+    lng: area.center.x / (Math.cos((LAT0 * Math.PI) / 180) * 111.32) + LON0,
+  };
+}
+
 // --- 市町村を選んだとき（script.js から呼ばれる）。null なら全体を見る ---
 function focusMap(name) {
   if (!map.ready) return;

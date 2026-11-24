@@ -76,7 +76,10 @@ function showResult(m) {
 
   drawTimeline(m);
   drawComparison();
-  focusMap(m.name); // 地図をその市町村に寄せる
+  focusMap(m.name); // 3D地図をその市町村に寄せる
+  // 浸水想定の地図も、その市町村へ動かす
+  const place = areaLatLng(m.name);
+  if (place && typeof focusHazardMap === "function") focusHazardMap(place.lat, place.lng);
 
   // 画面読み上げ用のまとめ（role="status" なので、変わると読み上げられる）
   document.getElementById("sr-summary").textContent =
