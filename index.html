@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>その海岸に、津波が来たら。｜高知の南海トラフ津波</title>
+  <meta name="description" content="南海トラフ地震で想定される、高知県沿岸19市町村の津波の高さと到達時間を、3D地図と図で確かめられます。">
+  <!-- 書体：読みやすさを重視したユニバーサルデザイン書体（BIZ UD） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDPMincho:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!--
+    画面の組み立て
+    ・スマホ：見出し → 地図 → 結果 の順に縦に並ぶ
+    ・PC：左に地図（固定）、右に見出しと結果（スクロール）
+  -->
+  <div class="layout">
+
+    <!-- 見出しと市町村の選択 -->
+    <header class="intro">
+      <p class="site-name">高知の南海トラフ津波</p>
+      <h1>その海岸に、<br>津波が来たら。</h1>
+      <p class="lead">南海トラフ地震で想定される、高知県沿岸19市町村の津波の高さと、届くまでの時間を確かめられます。国の想定（令和7年3月）をもとにしています。</p>
+
+      <div class="search">
+        <label for="city-select">あなたの市町村</label>
+        <select id="city-select">
+          <!-- 中身の市町村は script.js が data.json から足す -->
+          <option value="">選んでください</option>
+        </select>
+        <p id="search-message" class="message"></p>
+      </div>
+    </header>
+
+    <!-- 3D地図（PCでは左側に固定） -->
+    <section class="map-pane" aria-labelledby="map-title">
+      <h2 id="map-title" class="sr-only">海岸に立つ津波の高さの地図</h2>
+      <div id="map3d" class="map3d">
+        <p id="map-label" class="map-label" aria-hidden="true" hidden></p>
+        <p id="map-info" class="map-info"></p>
+        <p id="map-clock" class="map-clock" aria-hidden="true" hidden></p>
+        <div class="map-buttons">
+          <button id="map-time" type="button" class="map-time">時間の経過を見る</button>
+          <button id="map-reset" type="button" class="map-reset">全体を見る</button>
+        </div>
+      </div>
+      <div class="map-key">
+        <!-- 壁の色の凡例（色だけでなく、数字でも示す） -->
+        <ul class="map-legend" aria-label="壁の色の凡例（津波の高さ。高いほど暗い色）">
+          <li><span class="swatch" style="background:#fee391"></span>15m未満</li>
+          <li><span class="swatch" style="background:#fec44f"></span>15〜20m</li>
+          <li><span class="swatch" style="background:#fe9929"></span>20〜25m</li>
+          <li><span class="swatch" style="background:#d95f0e"></span>25〜30m</li>
+          <li><span class="swatch" style="background:#993404"></span>30m以上</li>
+        </ul>
+        <p class="map-hint">海岸の壁は、津波の高さを250倍に強調したものです。浸水する範囲ではありません。市町村をタップして選べます。横になぞると回ります。</p>
+        <p id="timelapse-text" class="timelapse-text" hidden></p>
+      </div>
+    </section>
+
+    <!-- 読み物（結果・説明・出典） -->
+    <main class="content">
+
+      <!-- 結果（市町村を選ぶまで隠しておく） -->
+      <section id="result" class="result" hidden>
+        <h2 id="result-name" class="result-name"></h2>
+        <!-- 画面読み上げ用のまとめ（見た目には出さない） -->
+        <p id="sr-summary" class="sr-only" role="status"></p>
+
+        <p class="headline-figures" aria-hidden="true">
+          海岸には、最大<span class="figure"><span id="max-height"></span><small>m</small></span>の津波。<br>
+          1mの津波は<span class="figure figure-time"><span id="arrival-1m"></span><small>分</small></span>で届く。
+        </p>
+        <p class="sub">3mの津波は<span id="arrival-3m"></span>分、5mの津波は<span id="arrival-5m"></span>分で届く想定です。</p>
+
+        <!-- 数字を読むときの注意 -->
+        <div class="notice">
+          <p><strong>「津波の高さ」と「浸水の深さ」は違います。</strong>最大津波高は、海岸での津波の高さです。陸に上がった水がどこまで来て、どのくらいの深さになるか（浸水の深さ）は、場所の高さや地形によって変わります。</p>
+          <p>最大津波高は11通りの想定のうちの最大値、到達時間は11通りの想定のうちの最短の時間です。同じ1つの想定から出た数字とは限りません。</p>
+        </div>
+
+        <!-- 到達時間のバー -->
+        <h3>津波が来るまでの時間</h3>
+        <p class="clock" aria-hidden="true">地震発生から <span id="clock-min">0</span> 分</p>
+        <!-- 1m・3m・5mの行は script.js が作る -->
+        <div id="timeline" class="timeline"></div>
+        <p class="small-note">時間の流れを4秒に縮めて見せる演出です。実際の時間や、津波の予測を表すものではありません。</p>
+
+        <!-- 高さくらべ -->
+        <h3>海岸での津波の高さを、人や家とくらべると</h3>
+        <p class="small-note">この市町村の場所が、すべてこの深さまで水につかるという意味ではありません。</p>
+        <div class="view-switch" role="group" aria-label="比較図の表示の切り替え">
+          <button id="view-2d" type="button" class="active" aria-pressed="true">平面</button>
+          <button id="view-3d" type="button" aria-pressed="false">3D</button>
+        </div>
+        <svg id="scene" viewBox="0 0 400 300" role="img" aria-label="津波の高さと人・建物の比較図"></svg>
+        <!-- 3Dの絵はここに描く（最初は隠しておく） -->
+        <div id="scene3d" class="scene3d" role="img" aria-label="津波の高さと人・建物の比較図（3D）" hidden>
+          <p id="water-level-3d" class="water-level-3d" aria-hidden="true"></p>
+          <p class="hint-3d" aria-hidden="true">横になぞると回ります</p>
+        </div>
+        <p id="legend-3d" class="legend-3d" hidden>赤い人（1.7m）、2階建ての家（約6m）、3階建ての建物（約9m）。紅白の柱は5mごとの目盛り</p>
+        <button id="replay-button" type="button" class="replay-button">もう一度見る</button>
+      </section>
+
+      <!-- 地図と同じ情報を表でも見られるようにする -->
+      <section class="about">
+        <h2>沿岸19市町村の一覧</h2>
+        <details class="data-table">
+          <summary>表で見る</summary>
+          <div class="table-scroll">
+            <table>
+              <caption>市町村ごとの最大津波高と到達時間（11通りの想定の最大値・最短時間）</caption>
+              <thead>
+                <tr>
+                  <th scope="col">市町村</th>
+                  <th scope="col">最大津波高</th>
+                  <th scope="col">1m到達</th>
+                  <th scope="col">3m到達</th>
+                  <th scope="col">5m到達</th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+        </details>
+        <p class="small-note">地図の「時間の経過を見る」は、1mの津波が来る時間（11通りの想定のうち最短）の順に壁が立つ演出です。15分を10秒に縮めています。実際の津波の進み方の予測ではありません。</p>
+      </section>
+
+      <footer class="site-footer">
+        <p>ここに示す数字は想定です。実際の津波とは異なる場合があります。市町村ごとにまとめた値で、自宅など個別の場所の値ではありません。避難の判断には、お住まいの自治体のハザードマップや、気象庁の津波警報を使ってください。</p>
+        <p>出典：<a href="https://www.bousai.go.jp/jishin/nankai/kento_wg/pdf/ichiran.pdf">内閣府「南海トラフ巨大地震モデル・被害想定手法検討会 計算結果集 市町村別一覧表」（令和7年3月）</a>をもとに作成</p>
+        <p>地図：「国土数値情報（行政区域データ）」（国土交通省）を加工して作成（簡素化データは<a href="https://github.com/smartnews-smri/japan-topography">スマートニュース メディア研究所</a>）</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- 3Dを描くためのライブラリ Three.js（外部から読み込む） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="scene3d.js"></script>
+  <script src="map3d.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

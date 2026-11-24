@@ -1,0 +1,164 @@
+{
+  "source": {
+    "title": "南海トラフ巨大地震モデル・被害想定手法検討会 地震モデル報告書 計算結果集 市町村別一覧表",
+    "publisher": "内閣府（防災担当）",
+    "published": "2025-03-31",
+    "url": "https://www.bousai.go.jp/jishin/nankai/kento_wg/pdf/ichiran.pdf",
+    "license": "公共データ利用規約（第1.0版）",
+    "note": "最大津波高はケース①〜⑪の最大値（満潮位・地殻変動考慮）。到達時間はケース①〜⑪の最短時間。"
+  },
+  "municipalities": [
+    {
+      "prefecture": "高知県",
+      "name": "高知市",
+      "maxHeight": 15,
+      "arrival1m": 10,
+      "arrival3m": 17,
+      "arrival5m": 21
+    },
+    {
+      "prefecture": "高知県",
+      "name": "室戸市",
+      "maxHeight": 23,
+      "arrival1m": 3,
+      "arrival3m": 3,
+      "arrival5m": 4
+    },
+    {
+      "prefecture": "高知県",
+      "name": "安芸市",
+      "maxHeight": 16,
+      "arrival1m": 7,
+      "arrival3m": 14,
+      "arrival5m": 23
+    },
+    {
+      "prefecture": "高知県",
+      "name": "南国市",
+      "maxHeight": 15,
+      "arrival1m": 11,
+      "arrival3m": 20,
+      "arrival5m": 23
+    },
+    {
+      "prefecture": "高知県",
+      "name": "土佐市",
+      "maxHeight": 24,
+      "arrival1m": 9,
+      "arrival3m": 18,
+      "arrival5m": 20
+    },
+    {
+      "prefecture": "高知県",
+      "name": "須崎市",
+      "maxHeight": 25,
+      "arrival1m": 8,
+      "arrival3m": 18,
+      "arrival5m": 20
+    },
+    {
+      "prefecture": "高知県",
+      "name": "宿毛市",
+      "maxHeight": 25,
+      "arrival1m": 5,
+      "arrival3m": 9,
+      "arrival5m": 12
+    },
+    {
+      "prefecture": "高知県",
+      "name": "土佐清水市",
+      "maxHeight": 34,
+      "arrival1m": 4,
+      "arrival3m": 6,
+      "arrival5m": 16
+    },
+    {
+      "prefecture": "高知県",
+      "name": "四万十市",
+      "maxHeight": 22,
+      "arrival1m": 7,
+      "arrival3m": 15,
+      "arrival5m": 18
+    },
+    {
+      "prefecture": "高知県",
+      "name": "香南市",
+      "maxHeight": 14,
+      "arrival1m": 10,
+      "arrival3m": 18,
+      "arrival5m": 23
+    },
+    {
+      "prefecture": "高知県",
+      "name": "安芸郡東洋町",
+      "maxHeight": 18,
+      "arrival1m": 3,
+      "arrival3m": 5,
+      "arrival5m": 8
+    },
+    {
+      "prefecture": "高知県",
+      "name": "安芸郡奈半利町",
+      "maxHeight": 15,
+      "arrival1m": 5,
+      "arrival3m": 11,
+      "arrival5m": 18
+    },
+    {
+      "prefecture": "高知県",
+      "name": "安芸郡田野町",
+      "maxHeight": 13,
+      "arrival1m": 8,
+      "arrival3m": 11,
+      "arrival5m": 20
+    },
+    {
+      "prefecture": "高知県",
+      "name": "安芸郡安田町",
+      "maxHeight": 14,
+      "arrival1m": 7,
+      "arrival3m": 12,
+      "arrival5m": 26
+    },
+    {
+      "prefecture": "高知県",
+      "name": "安芸郡芸西村",
+      "maxHeight": 13,
+      "arrival1m": 10,
+      "arrival3m": 18,
+      "arrival5m": 25
+    },
+    {
+      "prefecture": "高知県",
+      "name": "高岡郡中土佐町",
+      "maxHeight": 22,
+      "arrival1m": 9,
+      "arrival3m": 16,
+      "arrival5m": 18
+    },
+    {
+      "prefecture": "高知県",
+      "name": "高岡郡四万十町",
+      "maxHeight": 31,
+      "arrival1m": 7,
+      "arrival3m": 15,
+      "arrival5m": 17
+    },
+    {
+      "prefecture": "高知県",
+      "name": "幡多郡大月町",
+      "maxHeight": 26,
+      "arrival1m": 7,
+      "arrival3m": 12,
+      "arrival5m": 15
+    },
+    {
+      "prefecture": "高知県",
+      "name": "幡多郡黒潮町",
+      "maxHeight": 34,
+      "arrival1m": 7,
+      "arrival3m": 15,
+      "arrival5m": 17
+    }
+  ]
+}
