@@ -51,13 +51,17 @@
 | --- | --- |
 | index.html | 画面の骨組み |
 | style.css | 見た目 |
-| script.js | データの読み込み、市町村の選択、到達時間のバー、高さくらべのアニメーション、平面／3Dの切り替え |
-| scene3d.js | 3Dの高さくらべ |
-| map3d.js | 高知県の3D地図と津波の壁 |
-| map.json | 高知県の市町村の形と海岸線 |
-| hazard.js | 浸水想定・高台・避難場所の地図と、押した地点の情報 |
+| js/common.js | 共通の設定（動きを減らす設定など）と小さな道具 |
+| js/timeline.js | 到達時間のバー |
+| js/compare-2d.js | 平面の高さくらべ |
+| js/compare-3d.js | 3Dの高さくらべ |
+| js/coast-map-3d.js | 高知県の3D地図（海岸の壁・時間の経過） |
+| js/hazard-map.js | 浸水想定・高台・避難場所の地図と、押した地点の情報 |
+| js/main.js | 司令塔（データを読み込み、ほかのファイルに指示を出す） |
+| data/data.json | 市町村ごとの最大津波高と到達時間、出典 |
+| data/map.json | 高知県の市町村の形と海岸線 |
 | tools/make_map.py | map.json を作るPythonのプログラム |
-| data.json | 市町村ごとの最大津波高と到達時間、出典 |
+| docs/JSの読み方.md | JSの全体の流れと、使っている書き方の説明（初めて読む人向け） |
 
 ## データについて
 

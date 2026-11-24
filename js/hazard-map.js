@@ -1,11 +1,39 @@
-// ===== 浸水想定・高台・避難場所の地図（Leaflet を使う） =====
-// 国のサーバーから地図の画像やデータを読み込むので、GitHub Pages などで公開したページで動く。
-// 地図を押すと、その地点の「想定浸水深」「標高」「近い津波避難場所」を文字で示す。
+/* =========================================================
+   ファイル：js/hazard-map.js
+   役割　　：浸水想定・土地の高さ（高台）・津波の避難場所を重ねた地図。
+             地図を押すと、その地点の「想定浸水深」「標高」「近い津波避難場所」を文字で示す
+   使うHTML：#hazard-map（地図の枠）、#hazard-info（押した地点の結果）、
+             #hazard-drag（スマホで指で動かすかの切り替え）、[data-layer]（表示の切り替え）
+   使う道具：Leaflet（2Dの地図ライブラリ。index.html でインターネットから読み込む）
+   使うデータ：国のサーバーにある地図画像（タイル）とデータ。公開したページでだけ動く
 
+   ほかのファイルとのつながり
+     main.js から呼ばれる関数
+       ・initHazardMap()              … 地図を作る
+       ・focusHazardMap(緯度, 経度)   … その場所へ地図を動かす
+     common.js の REDUCE_MOTION を使う
+
+   「タイル」とは
+     Webの地図は、256×256ピクセルの小さな画像（タイル）を敷きつめて表示している。
+     タイルの場所は「ズーム(z)・横の番号(x)・縦の番号(y)」で決まり、URLの {z}/{x}/{y} に入る。
+
+   ここにあるもの
+     1. 使うHTMLの部品と、地図画像・データの場所
+     2. 浸水の深さの色の対応表
+     3. initHazardMap：地図を作る
+     4. focusHazardMap：市町村の場所へ動かす
+     5. 地図画像の1点の色を読む（浸水深・標高を調べる）
+     6. 避難場所を読み込んで印を置く
+     7. describePoint：押した地点の情報を文字で出す
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   1. 使うHTMLの部品と、地図画像・データの場所
+   --------------------------------------------------------- */
 const hazardBox = document.getElementById("hazard-map");
 const hazardInfo = document.getElementById("hazard-info");
 
-// --- 使う地図の画像（タイル）とデータの場所 ---
 const TILE = {
   // 国土地理院の淡色地図（土台）
   base: "https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",
@@ -19,7 +47,10 @@ const TILE = {
   shelter: "https://cyberjapandata.gsi.go.jp/xyz/skhb05/{z}/{x}/{y}.geojson",
 };
 
-// 津波浸水想定の色と浸水の深さの対応（ハザードマップポータルサイトの凡例）
+/* ---------------------------------------------------------
+   2. 浸水の深さの色の対応表（ハザードマップポータルサイトの凡例）
+      地図画像の色を読み取り、いちばん近い色の区分を「その地点の浸水深」とする
+   --------------------------------------------------------- */
 const DEPTH_CLASSES = [
   { rgb: [255, 255, 179], label: "0.3m未満" },
   { rgb: [247, 245, 169], label: "0.3〜0.5m" },
@@ -31,16 +62,19 @@ const DEPTH_CLASSES = [
   { rgb: [220, 122, 220], label: "20.0m以上" },
 ];
 
-const hazard = {
-  map: null,
-  layers: {},
+// 地図で使うものをまとめる箱
+const hazardMap = {
+  leaflet: null,         // Leaflet の地図そのもの
+  layers: {},            // 重ねる地図（浸水想定・高さ・避難場所）
   shelters: [],          // 読み込んだ避難場所 { name, address, lat, lng }
   loadedShelterTiles: {},// 読み込み済みのデータの番号（同じものを2回読まない）
   shelterIds: new Set(), // 登録済みの避難場所（重なりを防ぐ）
   pin: null,             // 押した地点の印
 };
 
-// --- 地図を作る ---
+/* ---------------------------------------------------------
+   3. initHazardMap：地図を作る（main.js から1回呼ばれる）
+   --------------------------------------------------------- */
 function initHazardMap() {
   if (typeof L === "undefined") {
     hazardInfo.textContent = "地図のライブラリを読み込めませんでした。";
@@ -49,7 +83,7 @@ function initHazardMap() {
   // スマホでは、最初は指で地図を動かせないようにする（ページのスクロールと混ざらないように）。
   // 「指で地図を動かす」ボタンでオンにできる。拡大・縮小は＋－ボタンと2本指でできる
   const touch = L.Browser.mobile;
-  hazard.map = L.map(hazardBox, { zoomControl: true, minZoom: 8, maxZoom: 17, dragging: !touch })
+  hazardMap.leaflet = L.map(hazardBox, { zoomControl: true, minZoom: 8, maxZoom: 17, dragging: !touch })
     .setView([33.45, 133.35], 9); // 高知県の真ん中あたり
 
   const dragButton = document.getElementById("hazard-drag");
@@ -57,52 +91,57 @@ function initHazardMap() {
     dragButton.hidden = true; // PCではマウスで動かせるので、ボタンは要らない
   }
   dragButton.addEventListener("click", () => {
-    const on = !hazard.map.dragging.enabled();
-    if (on) hazard.map.dragging.enable();
-    else hazard.map.dragging.disable();
+    const on = !hazardMap.leaflet.dragging.enabled();
+    if (on) hazardMap.leaflet.dragging.enable();
+    else hazardMap.leaflet.dragging.disable();
     dragButton.setAttribute("aria-pressed", String(on));
     dragButton.textContent = "指で地図を動かす：" + (on ? "オン" : "オフ");
   });
 
   const gsi = '<a href="https://maps.gsi.go.jp/development/ichiran.html">地理院タイル</a>';
-  L.tileLayer(TILE.base, { attribution: gsi, maxZoom: 17 }).addTo(hazard.map);
+  L.tileLayer(TILE.base, { attribution: gsi, maxZoom: 17 }).addTo(hazardMap.leaflet);
 
-  hazard.layers.tsunami = L.tileLayer(TILE.tsunami, {
+  hazardMap.layers.tsunami = L.tileLayer(TILE.tsunami, {
     attribution: '津波浸水想定：<a href="https://disaportal.gsi.go.jp/">ハザードマップポータルサイト</a>',
     opacity: 0.8,
     maxNativeZoom: 17,
   });
-  hazard.layers.relief = L.tileLayer(TILE.relief, { attribution: "色別標高図：" + gsi, opacity: 0.55, maxNativeZoom: 15 });
-  hazard.layers.shelter = L.layerGroup();
+  hazardMap.layers.relief = L.tileLayer(TILE.relief, { attribution: "色別標高図：" + gsi, opacity: 0.55, maxNativeZoom: 15 });
+  hazardMap.layers.shelter = L.layerGroup();
 
-  hazard.layers.tsunami.addTo(hazard.map);
-  hazard.layers.shelter.addTo(hazard.map);
+  hazardMap.layers.tsunami.addTo(hazardMap.leaflet);
+  hazardMap.layers.shelter.addTo(hazardMap.leaflet);
 
   // 表示する情報の切り替え（チェックボックス）
   document.querySelectorAll("[data-layer]").forEach((box) => {
     box.addEventListener("change", () => {
-      const layer = hazard.layers[box.dataset.layer];
-      if (box.checked) layer.addTo(hazard.map);
-      else hazard.map.removeLayer(layer);
+      const layer = hazardMap.layers[box.dataset.layer];
+      if (box.checked) layer.addTo(hazardMap.leaflet);
+      else hazardMap.leaflet.removeLayer(layer);
     });
   });
 
   // 地図を動かしたら、見えている範囲の避難場所を読み込む
-  hazard.map.on("moveend", loadVisibleShelters);
+  hazardMap.leaflet.on("moveend", loadVisibleShelters);
   loadVisibleShelters();
 
   // 地図を押したら、その地点の情報を調べる
-  hazard.map.on("click", (e) => describePoint(e.latlng));
+  hazardMap.leaflet.on("click", (e) => describePoint(e.latlng));
 }
 
-// --- 市町村を選んだら、その場所へ地図を動かす（script.js から呼ばれる） ---
+/* ---------------------------------------------------------
+   4. focusHazardMap：市町村を選んだら、その場所へ地図を動かす（main.js から呼ばれる）
+   --------------------------------------------------------- */
 function focusHazardMap(lat, lng) {
-  if (!hazard.map) return;
-  if (REDUCE_MOTION) hazard.map.setView([lat, lng], 12);
-  else hazard.map.flyTo([lat, lng], 12, { duration: 1.2 });
+  if (!hazardMap.leaflet) return;
+  if (REDUCE_MOTION) hazardMap.leaflet.setView([lat, lng], 12);
+  else hazardMap.leaflet.flyTo([lat, lng], 12, { duration: 1.2 });
 }
 
-// ===== 緯度経度と「地図画像の何枚目の何番目の点か」の変換 =====
+/* ---------------------------------------------------------
+   5. 地図画像の1点の色を読む
+      緯度・経度を「何枚目のタイルの、どの点か」に直し、その点の色から浸水深や標高を出す
+   --------------------------------------------------------- */
 function toTilePixel(lat, lng, z) {
   const n = 256 * Math.pow(2, z);
   const x = ((lng + 180) / 360) * n;
@@ -128,7 +167,7 @@ async function readPixel(template, lat, lng, z) {
 
 // 押した地点の想定浸水深（色から区分を読み取る）
 async function depthAt(lat, lng) {
-  const z = Math.min(Math.max(Math.round(hazard.map.getZoom()), 10), 17);
+  const z = Math.min(Math.max(Math.round(hazardMap.leaflet.getZoom()), 10), 17);
   const p = await readPixel(TILE.tsunami, lat, lng, z);
   if (!p || p[3] === 0) return null; // 色が付いていない
   let best = null;
@@ -149,15 +188,18 @@ async function elevationAt(lat, lng) {
   return v < 8388608 ? v * 0.01 : (v - 16777216) * 0.01;
 }
 
-// ===== 避難場所 =====
+/* ---------------------------------------------------------
+   6. 避難場所を読み込んで印を置く
+      国土地理院の「指定緊急避難場所」は災害の種類ごとに分かれていて、skhb05 が津波用
+   --------------------------------------------------------- */
 // 見えている範囲の避難場所データ（ズーム10の区切りごと）を読み込む
 function loadVisibleShelters() {
-  const bounds = hazard.map.getBounds();
-  if (hazard.map.getZoom() < 11) {
-    hazard.map.removeLayer(hazard.layers.shelter); // 広く見ているときは数が多すぎるので出さない
+  const bounds = hazardMap.leaflet.getBounds();
+  if (hazardMap.leaflet.getZoom() < 11) {
+    hazardMap.leaflet.removeLayer(hazardMap.layers.shelter); // 広く見ているときは数が多すぎるので出さない
     return;
   }
-  if (document.querySelector('[data-layer="shelter"]').checked) hazard.layers.shelter.addTo(hazard.map);
+  if (document.querySelector('[data-layer="shelter"]').checked) hazardMap.layers.shelter.addTo(hazardMap.leaflet);
   const a = toTilePixel(bounds.getNorth(), bounds.getWest(), 10);
   const b = toTilePixel(bounds.getSouth(), bounds.getEast(), 10);
   for (let x = a.tx; x <= b.tx; x++) {
@@ -167,19 +209,19 @@ function loadVisibleShelters() {
 
 async function loadShelterTile(x, y) {
   const key = x + "/" + y;
-  if (hazard.loadedShelterTiles[key]) return hazard.loadedShelterTiles[key];
+  if (hazardMap.loadedShelterTiles[key]) return hazardMap.loadedShelterTiles[key];
   const url = TILE.shelter.replace("{z}", 10).replace("{x}", x).replace("{y}", y);
-  hazard.loadedShelterTiles[key] = fetch(url)
+  hazardMap.loadedShelterTiles[key] = fetch(url)
     .then((r) => (r.ok ? r.json() : { features: [] }))
     .then((geo) => {
       geo.features.forEach((f) => {
         const [lng, lat] = f.geometry.coordinates;
         // 同じ避難場所を2回登録しない（名前と位置で見分ける）
         const id = f.properties.name + "@" + lat + "," + lng;
-        if (hazard.shelterIds.has(id)) return;
-        hazard.shelterIds.add(id);
+        if (hazardMap.shelterIds.has(id)) return;
+        hazardMap.shelterIds.add(id);
         const s = { name: f.properties.name, address: f.properties.address || "", lat, lng };
-        hazard.shelters.push(s);
+        hazardMap.shelters.push(s);
         // 印は「白い縁取りの墨色の四角」。色だけでなく形でも浸水の色と区別する
         const marker = L.marker([lat, lng], {
           icon: L.divIcon({ className: "shelter-icon", iconSize: [14, 14] }),
@@ -193,11 +235,11 @@ async function loadShelterTile(x, y) {
           div.append(strong, document.createElement("br"), s.address);
           return div;
         });
-        hazard.layers.shelter.addLayer(marker);
+        hazardMap.layers.shelter.addLayer(marker);
       });
     })
     .catch(() => {});
-  return hazard.loadedShelterTiles[key];
+  return hazardMap.loadedShelterTiles[key];
 }
 
 // 2点間の直線距離（m）
@@ -210,11 +252,14 @@ function distance(lat1, lng1, lat2, lng2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-// ===== 押した地点の情報をまとめて文字で出す =====
+/* ---------------------------------------------------------
+   7. describePoint：押した地点の情報をまとめて文字で出す
+      async と await は「時間のかかる読み込みを待ってから次へ進む」ための書き方
+   --------------------------------------------------------- */
 async function describePoint(latlng) {
   const { lat, lng } = latlng;
-  if (hazard.pin) hazard.map.removeLayer(hazard.pin);
-  hazard.pin = L.circleMarker(latlng, { radius: 8, color: "#1f2a33", weight: 3, fillColor: "#fff", fillOpacity: 1 }).addTo(hazard.map);
+  if (hazardMap.pin) hazardMap.leaflet.removeLayer(hazardMap.pin);
+  hazardMap.pin = L.circleMarker(latlng, { radius: 8, color: "#1f2a33", weight: 3, fillColor: "#fff", fillOpacity: 1 }).addTo(hazardMap.leaflet);
   hazardInfo.textContent = "調べています…";
 
   // 押した地点のまわり（3×3区切り）の避難場所を読み込んでから、近い順に並べる
@@ -228,7 +273,7 @@ async function describePoint(latlng) {
     Promise.all(loads),
   ]);
 
-  const nearest = hazard.shelters
+  const nearest = hazardMap.shelters
     .map((s) => ({ ...s, d: distance(lat, lng, s.lat, s.lng) }))
     .sort((a, b) => a.d - b.d)
     .slice(0, 3);
@@ -262,5 +307,3 @@ async function describePoint(latlng) {
     add("近い津波避難場所：", "この付近のデータが見つかりませんでした");
   }
 }
-
-initHazardMap();

@@ -1,5 +1,22 @@
-# 高知県の市町村の形と海岸線を、3D地図用の map.json にまとめる
+"""
+高知県の市町村の形と海岸線を、3D地図用の data/map.json にまとめるプログラム
+
+使い方（ターミナルで）:
+    python tools/make_map.py <全国の市区町村TopoJSON> data/data.json data/map.json
+
+  <全国の市区町村TopoJSON> は、スマートニュース メディア研究所が公開している
+  data/municipality/topojson/s0010/N03-21_210101.json
+  （https://github.com/smartnews-smri/japan-topography）
+
+やっていること:
+  1. TopoJSON の線（arc）を緯度・経度に戻す
+  2. 全国で1回しか使われていない線を「海岸」とみなす（隣の市町村と接していない線）
+  3. 高知県の市町村だけを取り出し、緯度・経度を km 単位の平面に直す
+  4. 市町村名を data.json の名前とそろえて、map.json に書き出す
+"""
 import json, math, sys
+
+# 引数（コマンドのあとに書いた3つ）を受け取る
 src, data_json, out = sys.argv[1], sys.argv[2], sys.argv[3]
 t = json.load(open(src, encoding="utf-8"))
 sx, sy = t["transform"]["scale"]; tx, ty = t["transform"]["translate"]

@@ -30,7 +30,7 @@
       <div class="search">
         <label for="city-select">あなたの市町村</label>
         <select id="city-select">
-          <!-- 中身の市町村は script.js が data.json から足す -->
+          <!-- 中身の市町村は js/main.js が data/data.json から足す -->
           <option value="">選んでください</option>
         </select>
         <p id="search-message" class="message"></p>
@@ -87,7 +87,7 @@
         <!-- 到達時間のバー -->
         <h3>津波が来るまでの時間</h3>
         <p class="clock" aria-hidden="true">地震発生から <span id="clock-min">0</span> 分</p>
-        <!-- 1m・3m・5mの行は script.js が作る -->
+        <!-- 1m・3m・5mの行は js/timeline.js が作る -->
         <div id="timeline" class="timeline"></div>
         <p class="small-note">時間の流れを4秒に縮めて見せる演出です。実際の時間や、津波の予測を表すものではありません。</p>
 
@@ -171,13 +171,20 @@
     </main>
   </div>
 
-  <!-- 3Dを描くためのライブラリ Three.js（外部から読み込む） -->
+  <!--
+    JavaScript の読み込み（上から順に読まれる）
+    1) 外部のライブラリ：Three.js（3D）、Leaflet（2Dの地図）
+    2) 自分のファイル：common.js（共通の設定）→ 各部品 → main.js（司令塔。最後に読む）
+    各ファイルの役割は docs/JSの読み方.md を参照
+  -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="scene3d.js"></script>
-  <script src="map3d.js"></script>
-  <!-- 2Dの地図ライブラリ Leaflet（外部から読み込む） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <script src="script.js"></script>
-  <script src="hazard.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/compare-2d.js"></script>
+  <script src="js/compare-3d.js"></script>
+  <script src="js/coast-map-3d.js"></script>
+  <script src="js/hazard-map.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
